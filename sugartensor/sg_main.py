@@ -203,6 +203,8 @@ def sg_layer_func(func):
             scale: If true, multiple by a trainable gamma variable. When the activation is
               linear (relu included), this can be disabled because it can be implicitly
               learned by the next layer. The default is True.
+            fused: If true, a the fused batch normalization op will be used. This is
+              faster, but can cause NaN issues in a few cases. The default is False.
             dout: A float of range [0, 100). A dropout rate. Set to 0 by default.
             bias: Boolean. If True, biases are added. As a default, it is set to True
             name: A name for the layer. As a default, the function name is assigned.
@@ -224,7 +226,8 @@ def sg_layer_func(func):
             shape = tensor.get_shape().as_list()
             # batch normalization off, layer normalization off, dropout off
             opt += tf.sg_opt(shape=shape, in_dim=shape[-1], dim=shape[-1],
-                             bn=False, ln=False, dout=0, summary=True, scale=True)
+                             bn=False, ln=False, dout=0, summary=True, scale=True,
+                             fused=False)
             if opt.regularizer == 'l1':
                 opt.regularizer = lambda x: tf.reduce_mean(tf.abs(x))
             elif opt.regularizer == 'l2':
@@ -277,7 +280,7 @@ def sg_layer_func(func):
                 variance_running = init.constant('variance', opt.dim, value=1, trainable=False, summary=opt.summary)
 
                 # use fused batch norm if ndims in [2, 3, 4]
-                if out_shape.ndims in [2, 3, 4]:
+                if out_shape.ndims in [2, 3, 4] and opt.fused:
                     # add HW dims if necessary, fused_batch_norm requires shape to be NHWC
                     if out_shape.ndims == 2:
                         out = tf.expand_dims(out, axis=1)

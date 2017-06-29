@@ -6,6 +6,14 @@ __author__ = 'namju.kim@kakaobrain.com'
 
 
 @tf.sg_sugar_func
+def sg_selu(x, opt):
+    with tf.name_scope(opt.name, 'elu') as scope:
+        alpha = 1.6732632423543772848170429916717
+        scale = 1.0507009873554804934193349852946
+        return scale*tf.where(x >= 0.0, x, alpha * tf.nn.elu(x))
+
+
+@tf.sg_sugar_func
 def sg_sigmoid(x, opt):
     return tf.nn.sigmoid(x, name=opt.name)
 
@@ -33,7 +41,7 @@ def sg_leaky_relu(x, opt):
         x: A tensor
         opt:
           name: A name for the operation (optional).
-    
+
     Returns:
       A `Tensor` with the same type and shape as `x`.
     """
